@@ -1,0 +1,83 @@
+# ============================================================
+# Experiment Configuration — Edge Computing in Predictive Maintenance
+# ============================================================
+
+# --- Data ---
+data:
+  dataset_url: "https://data.nasa.gov/download/hi77-rrsp/application%2Fx-zip-compressed"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  subsets:
+    - "FD001"         # Single fault mode, single operating condition (primary)
+    # - "FD002"       # Single fault mode, six operating conditions
+    # - "FD003"       # Two fault modes, single operating condition
+    # - "FD004"       # Two fault modes, six operating conditions
+
+# --- Preprocessing ---
+preprocessing:
+  rul_anomaly_threshold: 30          # RUL <= 30 cycles → anomaly_label = 1
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+  timestamp_freq_hz: 1               # Synthetic timestamp frequency
+
+# --- Feature Engineering ---
+features:
+  rolling_window_size: 5             # Rolling mean/std window
+  pca_n_components: 8                # Target PCA components
+  pca_variance_threshold: 0.95       # Minimum explained variance
+  sliding_window_size: 30            # LSTM input sequence length (cycles)
+
+# --- Model ---
+model:
+  encoder_units: [64, 32]            # LSTM encoder hidden units
+  decoder_units: [32, 64]            # LSTM decoder hidden units
+  output_features: 8                 # Must match pca_n_components
+  epochs: 100
+  batch_size: 64
+  learning_rate: 0.001
+  early_stopping_patience: 10
+  anomaly_threshold_sigma: 2         # threshold = mean + N*sigma of reconstruction error
+  model_save_path: "models/lstm_autoencoder.keras"
+
+# --- Deployment ---
+deployment:
+  edge:
+    name: "edge-only"
+    description: "Full LSTM inference at edge; only alert flag transmitted"
+    alert_payload_bytes: 100          # ~50-200 bytes for alert flag
+  cloud:
+    name: "cloud-only"
+    description: "Raw sensor window transmitted to cloud for inference"
+    sensors: 21
+    window_size: 30
+    bytes_per_float: 4
+    # payload = 21 * 30 * 4 = 2520 bytes
+  hybrid:
+    name: "hybrid"
+    description: "PCA at edge, compressed vector to cloud for inference"
+    pca_components: 8
+    bytes_per_float: 4
+    # payload = 8 * 4 = 32 bytes
+
+# --- Network Simulation ---
+network:
+  packet_loss_levels: [0, 5, 10, 20, 30]        # Percentage
+  bandwidth_levels: [100, 10, 5, 1]              # Mbps
+  runs_per_condition: 30
+  # Total conditions: 5 * 4 = 20
+  # Total logs: 20 * 3 strategies * 30 runs = 1800
+
+  # Simulation parameters (Python-based)
+  base_latency_ms: 1.0               # Base network latency (LAN)
+  jitter_ms: 0.5                     # Random jitter ± ms
+
+# --- Evaluation ---
+evaluation:
+  f1_threshold: 0.80                 # Minimum acceptable F1-Score
+  latency_threshold_ms: 200          # Maximum acceptable E2E latency
+  communication_efficiency_ratio: 0.10  # ≤10% of cloud volume = "efficient"
+  significance_level: 0.05           # p-value for ANOVA / Tukey HSD
+  results_dir: "results"
+  inference_logs_dir: "results/inference_logs"

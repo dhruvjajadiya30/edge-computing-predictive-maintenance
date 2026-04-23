@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (large files — download via pipeline)
+data/raw/
+data/processed/
+
+# Trained models (regenerated via pipeline)
+models/
+
+# Experiment results (regenerated via pipeline)
+results/
+
+# Logs
+*.log
+experiment.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary config
+config/quick_test_config.yaml
