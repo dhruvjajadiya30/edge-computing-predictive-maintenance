@@ -41,3 +41,12 @@ Thumbs.db
 
 # Temporary config
 config/quick_test_config.yaml
+
+# Document files (not part of code)
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.csv
+*.json
